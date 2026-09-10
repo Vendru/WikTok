@@ -9,9 +9,9 @@ export const WIKI_LANG = process.env.WIKI_LANG ?? "en";
  * quem rodar a pipeline aponte para o próprio contato.
  */
 export const CONTACT =
-  process.env.WIKI_CONTACT ?? "https://github.com/vendru/tikwiki";
+  process.env.WIKI_CONTACT ?? "https://github.com/vendru/wiktok";
 
-export const USER_AGENT = `TikWiki/0.1 (${CONTACT})`;
+export const USER_AGENT = `WikTok/0.1 (${CONTACT})`;
 
 export const apiEndpoint = (lang: string = WIKI_LANG) =>
   `https://${lang}.wikipedia.org/w/api.php`;
@@ -29,10 +29,10 @@ const root = process.cwd();
  * que os imports foram avaliados.
  */
 export const dbPath = () =>
-  process.env.TIKWIKI_DB ?? path.join(root, "data", "pool.db");
+  process.env.WIKTOK_DB ?? path.join(root, "data", "pool.db");
 
 export const cacheDir = () =>
-  process.env.TIKWIKI_CACHE ?? path.join(root, ".cache", "wiki");
+  process.env.WIKTOK_CACHE ?? path.join(root, ".cache", "wiki");
 
 export const CONFIG_DIR = path.join(root, "config");
 

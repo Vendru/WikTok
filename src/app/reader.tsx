@@ -2,6 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PoolArticle, Topico } from "@/lib/db/pool";
+import {
+  COOKIE_IDIOMA,
+  IDIOMAS,
+  type Idioma,
+  LOCALE,
+  NOME_DO_IDIOMA,
+  TEXTOS,
+  type Textos,
+  rotuloDoTema,
+} from "@/lib/i18n";
 import { MODOS, type Modo } from "@/lib/modes";
 import { summarize } from "@/lib/wiki/extract";
 
@@ -9,7 +19,7 @@ import { summarize } from "@/lib/wiki/extract";
 const SEEN_LIMIT = 500;
 /** Quantos ids acompanham o request; o suficiente para não repetir de imediato. */
 const EXCLUDE_LIMIT = 150;
-const STORAGE_KEY = "tikwiki:seen";
+const STORAGE_KEY = "wiktok:seen";
 
 function loadSeen(): number[] {
   try {
@@ -35,12 +45,6 @@ interface Filtros {
   mode: Modo;
 }
 
-const ROTULO_MODO: Record<Modo, string> = {
-  mixed: "Equilibrado",
-  quality: "Mais completos",
-  surprise: "Mais obscuros",
-};
-
 /**
  * Resultado da busca, com o motivo quando falha.
  *
@@ -48,6 +52,10 @@ const ROTULO_MODO: Record<Modo, string> = {
  * efeito nenhum: sem artigo novo, sem mensagem, sem nada na tela. O usuário
  * não tem como distinguir "acabou o tema" de "a rede caiu" de "o botão está
  * quebrado" — e a única saída era recarregar a página.
+ *
+ * O motivo é montado aqui, no idioma da interface, e não copiado do corpo da
+ * resposta: a API responde sempre em português, e o seletor de idioma não
+ * deveria parar de valer justamente na mensagem de erro.
  */
 type Resultado =
   | { ok: true; article: PoolArticle }
@@ -56,6 +64,7 @@ type Resultado =
 async function fetchArticle(
   exclude: number[],
   filtros: Filtros,
+  t: Textos,
 ): Promise<Resultado> {
   const params = new URLSearchParams({
     exclude: exclude.slice(-EXCLUDE_LIMIT).join(","),
@@ -66,24 +75,31 @@ async function fetchArticle(
   try {
     const res = await fetch(`/api/random?${params}`, { cache: "no-store" });
     if (!res.ok) {
-      const corpo = (await res.json().catch(() => ({}))) as { error?: string };
-      return { ok: false, motivo: corpo.error ?? `A busca falhou (${res.status}).` };
+      const motivo =
+        res.status === 404
+          ? t.erroTemaEsgotado
+          : res.status === 503
+            ? t.erroPoolVazio
+            : t.erroGenerico(res.status);
+      return { ok: false, motivo };
     }
     const body = (await res.json()) as { article?: PoolArticle };
-    if (!body.article) return { ok: false, motivo: "A resposta veio sem artigo." };
+    if (!body.article) return { ok: false, motivo: t.erroSemArtigo };
     return { ok: true, article: body.article };
   } catch {
     // fetch rejeita em queda de rede, e o json() rejeita em resposta truncada.
-    return { ok: false, motivo: "Sem resposta do servidor." };
+    return { ok: false, motivo: t.erroSemResposta };
   }
 }
 
 export default function Reader({
   initial,
   topics,
+  idioma: idiomaInicial,
 }: {
   initial: PoolArticle;
   topics: Topico[];
+  idioma: Idioma;
 }) {
   const [stack, setStack] = useState<PoolArticle[]>([initial]);
   const [index, setIndex] = useState(0);
@@ -91,6 +107,19 @@ export default function Reader({
   const [erro, setErro] = useState<string | null>(null);
   // "Surpreenda-me" é o padrão: tema vazio quer dizer o pool inteiro.
   const [filtros, setFiltros] = useState<Filtros>({ topic: "", mode: "mixed" });
+
+  // O idioma chega resolvido do servidor e vira estado aqui para a troca ser
+  // instantânea; o cookie só garante que a próxima visita já venha certa do
+  // servidor, sem piscar.
+  const [idioma, setIdioma] = useState<Idioma>(idiomaInicial);
+  const t = TEXTOS[idioma];
+
+  const trocarIdioma = useCallback((novo: Idioma) => {
+    setIdioma(novo);
+    document.cookie = `${COOKIE_IDIOMA}=${novo}; path=/; max-age=31536000; samesite=lax`;
+    // `lang` fica no <html>, fora da árvore do React, e precisa acompanhar.
+    document.documentElement.lang = LOCALE[novo];
+  }, []);
 
   // O próximo artigo é buscado enquanto o atual está na tela, para que
   // "outro" troque no mesmo instante do clique.
@@ -102,11 +131,11 @@ export default function Reader({
 
   const prefetch = useCallback(async () => {
     if (prefetched.current) return;
-    const r = await fetchArticle(seen.current, filtros);
+    const r = await fetchArticle(seen.current, filtros, t);
     // Falha no prefetch é silenciosa de propósito: o usuário não pediu nada
     // ainda. O clique seguinte tenta de novo e aí sim reporta.
     if (r.ok) prefetched.current = r.article;
-  }, [filtros]);
+  }, [filtros, t]);
 
   useEffect(() => {
     seen.current = [...loadSeen(), initial.pageId];
@@ -148,7 +177,7 @@ export default function Reader({
     setErro(null);
     setLoading(true);
     try {
-      const r = await fetchArticle(seen.current, filtros);
+      const r = await fetchArticle(seen.current, filtros, t);
       if (!r.ok) {
         setErro(r.motivo);
         return;
@@ -160,7 +189,7 @@ export default function Reader({
       // até a página ser recarregada.
       setLoading(false);
     }
-  }, [index, stack.length, prefetch, filtros, mostrar]);
+  }, [index, stack.length, prefetch, filtros, mostrar, t]);
 
   const back = useCallback(() => {
     setIndex((i) => Math.max(0, i - 1));
@@ -196,13 +225,13 @@ export default function Reader({
             A marca do GitHub vai inline, sem request externo. */}
         <div className="flex items-baseline gap-2.5">
           <h1 className="font-serif text-xl tracking-tight">
-            Tik<span className="text-accent">Wiki</span>
+            Wik<span className="text-accent">Tok</span>
           </h1>
           <a
             href="https://github.com/Vendru"
             target="_blank"
             rel="noopener noreferrer"
-            title="Código e outros projetos no GitHub"
+            title={t.autoria}
             className="inline-flex items-center gap-1 text-xs text-muted/70 transition hover:text-paper"
           >
             <svg
@@ -218,7 +247,7 @@ export default function Reader({
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <label className="sr-only" htmlFor="tema">
-            Tema
+            {t.tema}
           </label>
           <select
             id="tema"
@@ -226,16 +255,17 @@ export default function Reader({
             onChange={(e) => setFiltros((f) => ({ ...f, topic: e.target.value }))}
             className="rounded-full border border-edge bg-surface px-3 py-1.5 text-paper outline-none transition hover:border-muted focus:border-accent"
           >
-            <option value="">Surpreenda-me</option>
-            {topics.map((t) => (
-              <option key={t.slug} value={t.slug}>
-                {t.label} ({t.count.toLocaleString("pt-BR")})
+            <option value="">{t.surpreendaMe}</option>
+            {topics.map((tema) => (
+              <option key={tema.slug} value={tema.slug}>
+                {rotuloDoTema(idioma, tema.slug, tema.label)} (
+                {tema.count.toLocaleString(LOCALE[idioma])})
               </option>
             ))}
           </select>
 
           <label className="sr-only" htmlFor="modo">
-            Modo
+            {t.modo}
           </label>
           <select
             id="modo"
@@ -247,7 +277,23 @@ export default function Reader({
           >
             {MODOS.map((m) => (
               <option key={m} value={m}>
-                {ROTULO_MODO[m]}
+                {t.modos[m]}
+              </option>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor="idioma">
+            {t.idioma}
+          </label>
+          <select
+            id="idioma"
+            value={idioma}
+            onChange={(e) => trocarIdioma(e.target.value as Idioma)}
+            className="rounded-full border border-edge bg-surface px-3 py-1.5 text-paper outline-none transition hover:border-muted focus:border-accent"
+          >
+            {IDIOMAS.map((i) => (
+              <option key={i} value={i}>
+                {NOME_DO_IDIOMA[i]}
               </option>
             ))}
           </select>
@@ -294,7 +340,7 @@ export default function Reader({
               rel="noopener noreferrer"
               className="rounded-full bg-paper px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-white"
             >
-              Ler na Wikipédia →
+              {t.lerNaWikipedia}
             </a>
             {canGoBack && (
               <button
@@ -302,7 +348,7 @@ export default function Reader({
                 onClick={back}
                 className="rounded-full border border-edge px-5 py-2.5 text-sm text-muted transition hover:border-muted hover:text-paper"
               >
-                ← Anterior
+                {t.anterior}
               </button>
             )}
           </div>
@@ -316,30 +362,30 @@ export default function Reader({
           disabled={loading}
           className="w-full rounded-full bg-accent px-6 py-4 text-base font-semibold text-ink transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
         >
-          {loading ? "Buscando…" : erro ? "Tentar de novo" : "Outro artigo"}
+          {loading ? t.buscando : erro ? t.tentarDeNovo : t.outroArtigo}
         </button>
 
         {erro && (
           <p role="status" className="text-center text-xs leading-relaxed text-accent/90">
             {erro}
-            {filtros.topic && " Tente outro tema ou volte para “Surpreenda-me”."}
+            {filtros.topic && t.sugestaoTema}
           </p>
         )}
       </div>
 
       <footer className="pb-2 text-center text-xs leading-relaxed text-muted">
-        Conteúdo da{" "}
+        {t.conteudoDa}{" "}
         <a
           href="https://www.wikipedia.org"
           target="_blank"
           rel="noopener noreferrer"
           className="underline underline-offset-2 hover:text-paper"
         >
-          Wikipédia
+          {t.wikipedia}
         </a>
-        , sob a licença{" "}
+        {t.sobALicenca}{" "}
         <a
-          href="https://creativecommons.org/licenses/by-sa/4.0/deed.pt-BR"
+          href={t.licencaUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="underline underline-offset-2 hover:text-paper"
@@ -348,9 +394,7 @@ export default function Reader({
         </a>
         .
         <br />
-        <span className="text-muted/70">
-          Use ← e → ou espaço para navegar.
-        </span>
+        <span className="text-muted/70">{t.dicaTeclado}</span>
       </footer>
     </main>
   );

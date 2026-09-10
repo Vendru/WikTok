@@ -1,4 +1,4 @@
-# TikWiki
+# WikTok
 
 Entrega um artigo interessante da Wikipédia para ler, opcionalmente filtrado por
 tema.
@@ -62,8 +62,8 @@ só os N primeiros títulos, para validar rápido).
 | `WIKI_CONTACT` | URL do repo | Contato no `User-Agent`, exigido pela política de acesso da Wikimedia |
 | `WIKI_INTERVAL_MS` | `200` | Intervalo mínimo entre requests |
 | `WIKI_MAX_RETRIES` | `8` | Tentativas em 429/5xx antes de desistir |
-| `TIKWIKI_DB` | `data/pool.db` | Caminho do pool |
-| `TIKWIKI_CACHE` | `.cache/wiki` | Cache das respostas cruas |
+| `WIKTOK_DB` | `data/pool.db` | Caminho do pool |
+| `WIKTOK_CACHE` | `.cache/wiki` | Cache das respostas cruas |
 
 ## Pipeline
 

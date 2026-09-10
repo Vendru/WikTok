@@ -23,7 +23,7 @@ const row = () =>
     | undefined;
 
 beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "tikwiki-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "wiktok-"));
   db = openDb({ file: path.join(dir, "test.db") });
 });
 
@@ -101,7 +101,7 @@ describe("upsertArticles — a nota da fonte curada", () => {
   it("não deixa outra fonte sobrescrever a nota de quem chegou primeiro", () => {
     // Bug real: 129 artigos da lista peculiar tiveram a piada do curador
     // trocada pelo gancho do "Você sabia?" porque estavam nas duas fontes.
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tikwiki-nota-"));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "wiktok-nota-"));
     const db = openDb({ file: path.join(dir, "n.db") });
 
     const base = {

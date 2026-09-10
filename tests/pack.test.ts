@@ -26,13 +26,13 @@ const semear = () => {
 };
 
 beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "tikwiki-pack-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "wiktok-pack-"));
   db = path.join(dir, "pool.db");
-  process.env.TIKWIKI_DB = db;
+  process.env.WIKTOK_DB = db;
 });
 
 afterEach(() => {
-  delete process.env.TIKWIKI_DB;
+  delete process.env.WIKTOK_DB;
   fs.rmSync(dir, { recursive: true, force: true });
 });
 

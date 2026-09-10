@@ -1,4 +1,4 @@
-# Imagem do TikWiki.
+# Imagem do WikTok.
 #
 # O pool é artefato de build: o `prebuild` extrai data/pool.db.gz para
 # data/pool.db durante a construção, e a imagem final já sobe com o banco
@@ -41,17 +41,17 @@ ENV PORT=3000
 # Sem isto o Next escuta só em localhost e nenhum proxy externo alcança.
 ENV HOSTNAME=0.0.0.0
 
-RUN useradd --system --create-home --uid 1001 tikwiki
+RUN useradd --system --create-home --uid 1001 wiktok
 
 # O standalone já traz node_modules rastreado, config/, data/pool.db,
 # package.json e o server.js. Copiar .next inteiro mandaria junto 291 MB de
 # cache de build e 67 MB de artefatos de dev.
-COPY --from=builder --chown=tikwiki:tikwiki /app/.next/standalone ./
+COPY --from=builder --chown=wiktok:wiktok /app/.next/standalone ./
 # Os estáticos ficam de fora do standalone por design e são servidos pelo
 # próprio server.js.
-COPY --from=builder --chown=tikwiki:tikwiki /app/.next/static ./.next/static
+COPY --from=builder --chown=wiktok:wiktok /app/.next/static ./.next/static
 
-USER tikwiki
+USER wiktok
 EXPOSE 3000
 
 # O server.js do standalone sobe o Next sem passar pela CLI, o que corta o

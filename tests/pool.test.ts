@@ -13,7 +13,7 @@ let dbFile: string;
 let seed: DB;
 
 beforeAll(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "tikwiki-pool-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "wiktok-pool-"));
   dbFile = path.join(dir, "pool.db");
   seed = openDb({ file: dbFile });
   upsertArticles(
@@ -30,7 +30,7 @@ beforeAll(() => {
     })),
   );
   seed.close();
-  process.env.TIKWIKI_DB = dbFile;
+  process.env.WIKTOK_DB = dbFile;
 });
 
 afterAll(() => {
@@ -94,7 +94,7 @@ describe("randomArticle — sorteio por rowid", () => {
   it("continua uniforme com buracos no rowid deixados por remoções", async () => {
     // O sorteio usa rowid; remover linhas abre buracos, e um 'rowid >= ?'
     // favoreceria quem vem logo depois de cada buraco.
-    const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), "tikwiki-gaps-"));
+    const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), "wiktok-gaps-"));
     const file = path.join(dir2, "gaps.db");
     const seed2 = openDb({ file });
     upsertArticles(
@@ -112,7 +112,7 @@ describe("randomArticle — sorteio por rowid", () => {
     seed2.prepare(`DELETE FROM articles WHERE page_id % 2 = 1`).run();
     seed2.close();
 
-    process.env.TIKWIKI_DB = file;
+    process.env.WIKTOK_DB = file;
     vi.resetModules();
     const { randomArticle } = await import("../src/lib/db/pool");
 
@@ -129,7 +129,7 @@ describe("randomArticle — sorteio por rowid", () => {
     expect(Math.min(...valores)).toBeGreaterThan(45);
     expect(Math.max(...valores)).toBeLessThan(180);
 
-    process.env.TIKWIKI_DB = dbFile;
+    process.env.WIKTOK_DB = dbFile;
     vi.resetModules();
     fs.rmSync(dir2, { recursive: true, force: true });
   });
@@ -139,7 +139,7 @@ describe("randomArticle — filtro de tema", () => {
   it("continua respeitando o peso por fonte", async () => {
     // Regressão real: o caminho do tema ignorava a escolha de fonte, e a
     // lista peculiar caía de 58% para 8% assim que o usuário filtrava.
-    const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), "tikwiki-tema-"));
+    const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), "wiktok-tema-"));
     const file = path.join(dir2, "tema.db");
     const seed2 = openDb({ file });
 
@@ -180,7 +180,7 @@ describe("randomArticle — filtro de tema", () => {
     }
     seed2.close();
 
-    process.env.TIKWIKI_DB = file;
+    process.env.WIKTOK_DB = file;
     vi.resetModules();
     const { randomArticle } = await import("../src/lib/db/pool");
 
@@ -194,7 +194,7 @@ describe("randomArticle — filtro de tema", () => {
     // nessa proporção. Com ela, tem que passar de um terço.
     expect(porFonte.get("unusual")! / 600).toBeGreaterThan(0.33);
 
-    process.env.TIKWIKI_DB = dbFile;
+    process.env.WIKTOK_DB = dbFile;
     vi.resetModules();
     fs.rmSync(dir2, { recursive: true, force: true });
   });
@@ -208,7 +208,7 @@ describe("randomArticle — filtro de tema", () => {
     // Regressão real: quando a fonte sorteada esgotava dentro do tema, o
     // sorteio caía nos candidatos já vistos e podia devolver o artigo que
     // estava na tela. Para quem usa, o botão "outro artigo" parecia morto.
-    const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), "tikwiki-esgota-"));
+    const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), "wiktok-esgota-"));
     const file = path.join(dir2, "esgota.db");
     const seed2 = openDb({ file });
 
@@ -248,7 +248,7 @@ describe("randomArticle — filtro de tema", () => {
     }
     seed2.close();
 
-    process.env.TIKWIKI_DB = file;
+    process.env.WIKTOK_DB = file;
     vi.resetModules();
     const { randomArticle } = await import("../src/lib/db/pool");
 
@@ -265,7 +265,7 @@ describe("randomArticle — filtro de tema", () => {
     // Exaurido de verdade, repetir é melhor que devolver nada.
     expect(randomArticle({ lang: "en", topic: "tema", exclude: vistos })).toBeDefined();
 
-    process.env.TIKWIKI_DB = dbFile;
+    process.env.WIKTOK_DB = dbFile;
     vi.resetModules();
     fs.rmSync(dir2, { recursive: true, force: true });
   });
