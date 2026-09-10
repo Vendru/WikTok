@@ -16,7 +16,7 @@ export type Idioma = (typeof IDIOMAS)[number];
 export const IDIOMA_PADRAO: Idioma = "pt";
 
 /** Nome do cookie que guarda a escolha. Lido no servidor, escrito no cliente. */
-export const COOKIE_IDIOMA = "tikwiki_idioma";
+export const COOKIE_IDIOMA = "wiktok_idioma";
 
 export const ehIdioma = (v: unknown): v is Idioma =>
   typeof v === "string" && (IDIOMAS as readonly string[]).includes(v);
@@ -70,7 +70,7 @@ export interface Textos {
 
 export const TEXTOS: Record<Idioma, Textos> = {
   pt: {
-    titulo: "TikWiki — um artigo interessante por vez",
+    titulo: "WikTok — um artigo interessante por vez",
     descricao:
       "Descubra artigos peculiares e fascinantes da Wikipédia, um de cada vez.",
     autoria: "Código e outros projetos no GitHub",
@@ -119,7 +119,7 @@ export const TEXTOS: Record<Idioma, Textos> = {
     poolVazioInstrucao: "Rode a ingestão antes de subir o app:",
   },
   en: {
-    titulo: "TikWiki — one interesting article at a time",
+    titulo: "WikTok — one interesting article at a time",
     descricao:
       "Discover unusual and fascinating Wikipedia articles, one at a time.",
     autoria: "Code and other projects on GitHub",

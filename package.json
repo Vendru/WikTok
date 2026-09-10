@@ -1,9 +1,9 @@
 {
-  "name": "tikwiki",
+  "name": "wiktok",
   "version": "0.1.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Vendru/TikWiki.git"
+    "url": "git+https://github.com/Vendru/WikTok.git"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

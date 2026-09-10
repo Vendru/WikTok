@@ -19,7 +19,7 @@ import { summarize } from "@/lib/wiki/extract";
 const SEEN_LIMIT = 500;
 /** Quantos ids acompanham o request; o suficiente para não repetir de imediato. */
 const EXCLUDE_LIMIT = 150;
-const STORAGE_KEY = "tikwiki:seen";
+const STORAGE_KEY = "wiktok:seen";
 
 function loadSeen(): number[] {
   try {
@@ -225,7 +225,7 @@ export default function Reader({
             A marca do GitHub vai inline, sem request externo. */}
         <div className="flex items-baseline gap-2.5">
           <h1 className="font-serif text-xl tracking-tight">
-            Tik<span className="text-accent">Wiki</span>
+            Wik<span className="text-accent">Tok</span>
           </h1>
           <a
             href="https://github.com/Vendru"

@@ -1,13 +1,13 @@
 # Blueprint da Render.
 #
-# O TikWiki é read-only em produção: nenhuma escrita, nenhum estado entre
+# O WikTok é read-only em produção: nenhuma escrita, nenhum estado entre
 # requests, nenhuma chamada de rede durante um request. O pool vai dentro da
 # imagem, então o disco efêmero do plano gratuito não é limitação — não há
 # nada a persistir.
 
 services:
   - type: web
-    name: tikwiki
+    name: wiktok
     runtime: docker
     plan: free
     # Das regiões disponíveis (oregon, ohio, virginia, frankfurt, singapore),
